@@ -1,0 +1,3017 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitScope — GitHub Repository Intelligence</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg: #070a0f;
+    --surface: #0d1118;
+    --surface-2: #111722;
+    --border: #202938;
+    --text: #f2f5f9;
+    --muted: #8995a7;
+    --blue: #4f8cff;
+    --blue-light: #78a7ff;
+    --green: #45d39a;
+    --yellow: #f2bd55;
+    --red: #f06b78;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+        radial-gradient(circle at 80% 0%, rgba(50,100,190,.16), transparent 35%),
+        var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+input {
+    font-family: inherit;
+}
+
+nav {
+    height: 72px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 7%;
+    background: rgba(7,10,15,.84);
+    backdrop-filter: blur(16px);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    font-size: 21px;
+    font-weight: 750;
+}
+
+.logo-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg,#4f8cff,#67c7ff);
+    color: white;
+    font-weight: 900;
+    box-shadow: 0 0 30px rgba(79,140,255,.28);
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.nav-links a:hover {
+    color: white;
+}
+
+.github-btn {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 9px 15px;
+    border-radius: 8px;
+    color: white !important;
+}
+
+.hero {
+    max-width: 1050px;
+    margin: auto;
+    padding: 105px 25px 70px;
+    text-align: center;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border: 1px solid rgba(79,140,255,.28);
+    background: rgba(79,140,255,.08);
+    border-radius: 999px;
+    color: var(--blue-light);
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 25px;
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(69,211,154,.7);
+}
+
+h1 {
+    font-size: clamp(44px,7vw,76px);
+    line-height: .98;
+    letter-spacing: -4px;
+    max-width: 850px;
+    margin: auto;
+}
+
+.gradient {
+    background: linear-gradient(90deg,#fff,#78a7ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+    max-width: 670px;
+    margin: 28px auto 36px;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1.7;
+}
+
+.scanner {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 7px;
+    background: rgba(17,23,34,.9);
+    border: 1px solid #293448;
+    border-radius: 14px;
+    display: flex;
+    box-shadow: 0 25px 70px rgba(0,0,0,.35);
+}
+
+.scanner input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: white;
+    padding: 15px 17px;
+    font-size: 15px;
+}
+
+.scanner input::placeholder {
+    color: #657184;
+}
+
+.scan-btn {
+    border: 0;
+    border-radius: 9px;
+    background: var(--blue);
+    color: white;
+    padding: 0 24px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.scan-btn:hover {
+    background: #679cff;
+    transform: translateY(-1px);
+}
+
+.scan-btn:disabled {
+    opacity: .65;
+    cursor: wait;
+    transform: none;
+}
+
+.demo {
+    color: #687589;
+    font-size: 12px;
+    margin-top: 15px;
+}
+
+.error {
+    max-width: 780px;
+    margin: 15px auto 0;
+    padding: 12px 15px;
+    border-radius: 9px;
+    border: 1px solid rgba(240,107,120,.25);
+    background: rgba(240,107,120,.08);
+    color: var(--red);
+    font-size: 13px;
+    display: none;
+}
+
+.results {
+    max-width: 1100px;
+    margin: 0 auto 100px;
+    padding: 0 25px;
+    display: none;
+}
+
+.results.show {
+    display: block;
+    animation: appear .4s ease;
+}
+
+@keyframes appear {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 18px;
+}
+
+.repo-name {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.repo-name span {
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.badge {
+    padding: 6px 10px;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.badge.green {
+    color: var(--green);
+    background: rgba(69,211,154,.1);
+    border: 1px solid rgba(69,211,154,.2);
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+}
+
+.panel {
+    background: linear-gradient(145deg,var(--surface-2),var(--surface));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+}
+
+.score-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+}
+
+.score {
+    width: 145px;
+    height: 145px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background:
+        radial-gradient(circle,var(--surface) 58%,transparent 60%),
+        conic-gradient(var(--green) 0deg 295deg,#263243 295deg 360deg);
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 15px;
+}
+
+.score small {
+    font-size: 15px;
+    color: var(--muted);
+}
+
+.score-label {
+    font-weight: 700;
+}
+
+.panel-title {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+.signals {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.signal {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 15px;
+    background: rgba(255,255,255,.015);
+}
+
+.signal strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.signal span {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.good {
+    color: var(--green) !important;
+}
+
+.warn {
+    color: var(--yellow) !important;
+}
+
+.bad {
+    color: var(--red) !important;
+}
+
+/* PRO AREA */
+
+.pro-area {
+    margin-top: 18px;
+}
+
+.pro-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.pro-header h2 {
+    font-size: 22px;
+    letter-spacing: -.5px;
+}
+
+.demo-toggle {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.demo-toggle input {
+    accent-color: var(--blue);
+}
+
+.pro-grid {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 14px;
+}
+
+.pro-card {
+    position: relative;
+    min-height: 205px;
+    background: linear-gradient(145deg,#101722,#0c1118);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    overflow: hidden;
+}
+
+.pro-card h3 {
+    font-size: 16px;
+    margin-bottom: 9px;
+}
+
+.pro-card p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.pro-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: rgba(79,140,255,.1);
+    color: var(--blue-light);
+    font-weight: 800;
+    margin-bottom: 15px;
+}
+
+.locked-content {
+    filter: blur(4px);
+    opacity: .35;
+    pointer-events: none;
+}
+
+.lock-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(
+        180deg,
+        rgba(13,17,24,.45),
+        rgba(13,17,24,.88)
+    );
+    text-align: center;
+    padding: 20px;
+}
+
+.lock {
+    font-size: 22px;
+    margin-bottom: 7px;
+}
+
+.lock-overlay strong {
+    font-size: 14px;
+}
+
+.lock-overlay span {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.pro-unlocked {
+    display: none;
+}
+
+.pro-unlocked.active {
+    display: block;
+}
+
+.pro-locked.hidden {
+    display: none;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    font-size: 13px;
+}
+
+.stat-row:last-child {
+    border-bottom: 0;
+}
+
+.stat-row span:first-child {
+    color: var(--muted);
+}
+
+.stat-row span:last-child {
+    font-weight: 650;
+}
+
+.tech-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 13px;
+}
+
+.tech-tag {
+    border: 1px solid var(--border);
+    background: rgba(79,140,255,.08);
+    color: #b9d0ff;
+    padding: 6px 9px;
+    border-radius: 7px;
+    font-size: 11px;
+}
+
+.evidence-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.evidence-list li {
+    color: #cbd4e0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.evidence-list li::before {
+    content: "✓";
+    color: var(--green);
+    font-weight: 800;
+    margin-right: 8px;
+}
+
+.monitor-box {
+    border: 1px dashed #34445d;
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.pro-cta {
+    margin-top: 15px;
+    border: 1px solid rgba(79,140,255,.28);
+    background: linear-gradient(
+        135deg,
+        rgba(79,140,255,.12),
+        rgba(69,211,154,.05)
+    );
+    border-radius: 14px;
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.pro-cta h3 {
+    font-size: 17px;
+    margin-bottom: 5px;
+}
+
+.pro-cta p {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.pro-cta button {
+    flex-shrink: 0;
+    border: 0;
+    background: var(--blue);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 9px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.pro-cta button:hover {
+    background: #679cff;
+}
+
+/* FEATURES */
+
+.features {
+    max-width: 1050px;
+    margin: 0 auto;
+    padding: 30px 25px 100px;
+}
+
+.section-heading {
+    text-align: center;
+    margin-bottom: 45px;
+}
+
+.section-heading h2 {
+    font-size: 34px;
+    letter-spacing: -1.5px;
+}
+
+.section-heading p {
+    color: var(--muted);
+    margin-top: 12px;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 16px;
+}
+
+.feature {
+    padding: 25px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    transition: .2s;
+}
+
+.feature:hover {
+    transform: translateY(-4px);
+    border-color: #34445d;
+}
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: rgba(79,140,255,.1);
+    color: var(--blue-light);
+    margin-bottom: 18px;
+    font-weight: 800;
+}
+
+.feature h3 {
+    font-size: 16px;
+    margin-bottom: 9px;
+}
+
+.feature p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* PRICING */
+
+.pricing {
+    max-width: 1100px;
+    margin: 0 auto 100px;
+    padding: 0 25px;
+}
+
+.pricing-heading {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.pricing-heading h2 {
+    font-size: 34px;
+    letter-spacing: -1.5px;
+    margin-bottom: 10px;
+}
+
+.pricing-heading p {
+    color: var(--muted);
+}
+
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 16px;
+}
+
+.pricing-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    min-height: 440px;
+}
+
+.pricing-card.pro-card {
+    border-color: #3d5e91;
+    background:
+        radial-gradient(circle at 90% 0%,rgba(79,140,255,.14),transparent 45%),
+        var(--surface);
+}
+
+.pricing-card.yearly-card {
+    border-color: rgba(69,211,154,.35);
+}
+
+.popular {
+    position: absolute;
+    top: -12px;
+    right: 20px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--blue);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.best-value {
+    background: var(--green);
+    color: #06130e;
+}
+
+.plan-name {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 15px;
+}
+
+.pricing-card h3 {
+    font-size: 38px;
+    letter-spacing: -1.5px;
+    margin-bottom: 5px;
+}
+
+.pricing-card h3 span {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+.plan-description {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 40px;
+    margin-bottom: 22px;
+}
+
+.plan-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    margin-bottom: 25px;
+}
+
+.plan-features li {
+    color: #cbd4e0;
+    font-size: 13px;
+}
+
+.plan-features li::before {
+    content: "✓";
+    color: var(--green);
+    font-weight: 800;
+    margin-right: 9px;
+}
+
+.pricing-btn {
+    width: 100%;
+    margin-top: auto;
+    padding: 13px 18px;
+    border-radius: 9px;
+    font-weight: 750;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.free-btn {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: white;
+}
+
+.pro-pricing-btn {
+    border: 0;
+    background: var(--blue);
+    color: white;
+}
+
+.yearly-pricing-btn {
+    border: 0;
+    background: var(--green);
+    color: #07130e;
+}
+
+.payment-note {
+    text-align: center;
+    color: #687589;
+    font-size: 11px;
+    margin-top: 18px;
+}
+
+footer {
+    border-top: 1px solid var(--border);
+    padding: 30px 7%;
+    display: flex;
+    justify-content: space-between;
+    color: #687589;
+    font-size: 12px;
+}
+
+/* MODAL */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.68);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-box {
+    width: 100%;
+    max-width: 430px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 30px 100px rgba(0,0,0,.5);
+}
+
+.modal-box h3 {
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+.modal-box p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 22px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: 11px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.close-btn {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: white;
+}
+
+.modal-pro-btn {
+    border: 0;
+    background: var(--blue);
+    color: white;
+    font-weight: 700;
+}
+
+@media (max-width: 900px) {
+    .pricing-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pricing-card {
+        min-height: auto;
+    }
+
+    .pro-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 800px) {
+    .nav-links a:not(.github-btn) {
+        display: none;
+    }
+
+    .hero {
+        padding-top: 70px;
+    }
+
+    h1 {
+        letter-spacing: -2px;
+    }
+
+    .scanner {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .scan-btn {
+        height: 48px;
+    }
+
+    .result-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .signals {
+        grid-template-columns: 1fr;
+    }
+
+    .pro-cta {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pro-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+    <a href="#" class="logo">
+        <div class="logo-mark">G</div>
+        GitScope
+    </a>
+
+    <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#pro">Pro</a>
+        <a
+            href="https://github.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="github-btn"
+        >
+            View on GitHub
+        </a>
+    </div>
+</nav>
+
+
+<section class="hero">
+
+    <div class="eyebrow">
+        <span class="dot"></span>
+        Evidence-based repository intelligence
+    </div>
+
+    <h1>
+        Understand a GitHub repository
+        <span class="gradient">before you use it.</span>
+    </h1>
+
+    <p>
+        GitScope analyzes public repository signals and turns them
+        into a clear, explainable assessment — without executing
+        the repository's code.
+    </p>
+
+    <div class="scanner">
+        <input
+            id="repoInput"
+            type="text"
+            placeholder="Paste a GitHub repository URL..."
+            autocomplete="off"
+        >
+
+        <button
+            id="scanButton"
+            class="scan-btn"
+            onclick="analyzeRepository()"
+        >
+            Analyze
+        </button>
+    </div>
+
+    <div class="demo">
+        Try it with: github.com/facebook/react
+    </div>
+
+    <div id="errorBox" class="error"></div>
+
+</section>
+
+
+<section id="results" class="results">
+
+    <div class="result-header">
+
+        <div class="repo-name">
+            <span id="owner">owner</span> /
+            <span id="repo">repository</span>
+        </div>
+
+        <div class="badge green">
+            ANALYSIS COMPLETE
+        </div>
+
+    </div>
+
+
+    <div class="result-grid">
+
+        <div class="panel score-panel">
+
+            <div id="scoreCircle" class="score">
+                <span>
+                    <span id="scoreValue">0</span>
+                    <small>/100</small>
+                </span>
+            </div>
+
+            <div id="scoreLabel" class="score-label">
+                Analyzing...
+            </div>
+
+        </div>
+
+
+        <div class="panel">
+
+            <div class="panel-title">
+                Observable signals
+            </div>
+
+            <div class="signals">
+
+                <div class="signal">
+                    <strong id="activityTitle">● Activity</strong>
+                    <span id="activityText">
+                        Analyzing repository activity.
+                    </span>
+                </div>
+
+                <div class="signal">
+                    <strong id="docsTitle">● Documentation</strong>
+                    <span id="docsText">
+                        Checking repository documentation.
+                    </span>
+                </div>
+
+                <div class="signal">
+                    <strong id="licenseTitle">● License</strong>
+                    <span id="licenseText">
+                        Checking repository license.
+                    </span>
+                </div>
+
+                <div class="signal">
+                    <strong id="communityTitle">● Community</strong>
+                    <span id="communityText">
+                        Checking repository community signals.
+                    </span>
+                </div>
+
+                <div class="signal">
+                    <strong id="issuesTitle">● Open issues</strong>
+                    <span id="issuesText">
+                        Checking unresolved issues.
+                    </span>
+                </div>
+
+                <div class="signal">
+                    <strong id="releaseTitle">● Releases</strong>
+                    <span id="releaseText">
+                        Checking release activity.
+                    </span>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- PRO AREA -->
+
+    <div class="pro-area">
+
+        <div class="pro-header">
+
+            <h2>GitScope Pro</h2>
+
+            <!-- TEMPORARY TEST CONTROL -->
+            <label class="demo-toggle">
+                <input
+                    type="checkbox"
+                    id="demoProToggle"
+                    onchange="toggleDemoPro()"
+                >
+                Demo Pro
+            </label>
+
+        </div>
+
+
+        <!-- LOCKED VERSION -->
+
+        <div id="proLocked" class="pro-locked">
+
+            <div class="pro-grid">
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">TS</div>
+
+                    <div class="locked-content">
+                        <h3>Technology Stack</h3>
+                        <p>
+                            Detect languages, frameworks and project technologies.
+                        </p>
+                    </div>
+
+                    <div class="lock-overlay">
+                        <div class="lock">🔒</div>
+                        <strong>Technology Stack</strong>
+                        <span>Unlock with Pro</span>
+                    </div>
+
+                </div>
+
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">DE</div>
+
+                    <div class="locked-content">
+                        <h3>Dependency Analysis</h3>
+                        <p>
+                            Inspect dependency files and project package information.
+                        </p>
+                    </div>
+
+                    <div class="lock-overlay">
+                        <div class="lock">🔒</div>
+                        <strong>Dependency Analysis</strong>
+                        <span>Unlock with Pro</span>
+                    </div>
+
+                </div>
+
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">SE</div>
+
+                    <div class="locked-content">
+                        <h3>Security Signals</h3>
+                        <p>
+                            Review observable repository security-related signals.
+                        </p>
+                    </div>
+
+                    <div class="lock-overlay">
+                        <div class="lock">🔒</div>
+                        <strong>Security Signals</strong>
+                        <span>Unlock with Pro</span>
+                    </div>
+
+                </div>
+
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">EV</div>
+
+                    <div class="locked-content">
+                        <h3>Detailed Evidence</h3>
+                        <p>
+                            Get a deeper explanation of the signals behind the score.
+                        </p>
+                    </div>
+
+                    <div class="lock-overlay">
+                        <div class="lock">🔒</div>
+                        <strong>Detailed Evidence</strong>
+                        <span>Unlock with Pro</span>
+                    </div>
+
+                </div>
+
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">CO</div>
+
+                    <div class="locked-content">
+                        <h3>Repository Comparison</h3>
+                        <p>
+                            Compare repositories using the same observable signals.
+                        </p>
+                    </div>
+
+                    <div class="lock-overlay">
+                        <div class="lock">🔒</div>
+                        <strong>Repository Comparison</strong>
+                        <span>Unlock with Pro</span>
+                    </div>
+
+                </div>
+
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">MO</div>
+
+                    <div class="locked-content">
+                        <h3>Monitoring</h3>
+                        <p>
+                            Keep track of repository changes over time.
+                        </p>
+                    </div>
+
+                    <div class="lock-overlay">
+                        <div class="lock">🔒</div>
+                        <strong>Monitoring</strong>
+                        <span>Unlock with Pro</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="pro-cta">
+
+                <div>
+                    <h3>Unlock deeper repository intelligence.</h3>
+                    <p>
+                        Get unlimited analyses and all GitScope Pro features.
+                    </p>
+                </div>
+
+                <button onclick="startCheckout('monthly')">
+                    Get Pro — $4.99/month
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- UNLOCKED VERSION -->
+
+        <div id="proUnlocked" class="pro-unlocked">
+
+            <div class="pro-grid">
+
+                <!-- TECHNOLOGY -->
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">TS</div>
+
+                    <h3>Technology Stack</h3>
+
+                    <p>
+                        Observable technologies detected from repository metadata.
+                    </p>
+
+                    <div
+                        id="technologyTags"
+                        class="tech-tags"
+                    ></div>
+
+                </div>
+
+
+                <!-- DEPENDENCIES -->
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">DE</div>
+
+                    <h3>Dependency Analysis</h3>
+
+                    <div id="dependencyStats">
+
+                        <div class="stat-row">
+                            <span>Dependency files</span>
+                            <span id="dependencyFiles">Checking...</span>
+                        </div>
+
+                        <div class="stat-row">
+                            <span>Repository size</span>
+                            <span id="repoSize">Checking...</span>
+                        </div>
+
+                        <div class="stat-row">
+                            <span>Fork</span>
+                            <span id="repoFork">Checking...</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SECURITY -->
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">SE</div>
+
+                    <h3>Security Signals</h3>
+
+                    <ul
+                        id="securityEvidence"
+                        class="evidence-list"
+                    ></ul>
+
+                    <div class="monitor-box">
+                        These are observable repository signals,
+                        not a guarantee that the repository is safe.
+                    </div>
+
+                </div>
+
+
+                <!-- EVIDENCE -->
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">EV</div>
+
+                    <h3>Detailed Evidence</h3>
+
+                    <ul
+                        id="detailedEvidence"
+                        class="evidence-list"
+                    ></ul>
+
+                </div>
+
+
+                <!-- COMPARISON -->
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">CO</div>
+
+                    <h3>Repository Comparison</h3>
+
+                    <p>
+                        Compare this repository with another public GitHub
+                        repository using the same scoring model.
+                    </p>
+
+                    <div style="margin-top:15px;display:flex;gap:8px;">
+
+                        <input
+                            id="compareInput"
+                            type="text"
+                            placeholder="github.com/owner/repo"
+                            style="
+                                flex:1;
+                                min-width:0;
+                                background:#0b1017;
+                                border:1px solid var(--border);
+                                border-radius:8px;
+                                padding:10px;
+                                color:white;
+                                outline:none;
+                            "
+                        >
+
+                        <button
+                            onclick="compareRepository()"
+                            style="
+                                border:0;
+                                background:var(--blue);
+                                color:white;
+                                border-radius:8px;
+                                padding:0 13px;
+                                cursor:pointer;
+                                font-weight:700;
+                            "
+                        >
+                            Compare
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="comparisonResult"
+                        style="
+                            margin-top:12px;
+                            color:var(--muted);
+                            font-size:12px;
+                        "
+                    ></div>
+
+                </div>
+
+
+                <!-- MONITORING -->
+
+                <div class="pro-card">
+
+                    <div class="pro-icon">MO</div>
+
+                    <h3>Monitoring</h3>
+
+                    <p>
+                        Save a repository for future monitoring.
+                    </p>
+
+                    <div class="monitor-box">
+                        Monitoring is currently available as a Pro
+                        interface preview. A backend is required to
+                        persist monitoring data.
+                    </div>
+
+                    <button
+                        onclick="enableMonitoring()"
+                        style="
+                            margin-top:12px;
+                            border:1px solid var(--border);
+                            background:var(--surface-2);
+                            color:white;
+                            border-radius:8px;
+                            padding:10px 13px;
+                            cursor:pointer;
+                        "
+                    >
+                        Monitor Repository
+                    </button>
+
+                    <div
+                        id="monitorStatus"
+                        style="
+                            margin-top:9px;
+                            color:var(--muted);
+                            font-size:11px;
+                        "
+                    ></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section id="features" class="features">
+
+    <div class="section-heading">
+
+        <h2>
+            See more than GitHub shows at a glance.
+        </h2>
+
+        <p>
+            GitScope organizes repository evidence into something easier to understand.
+        </p>
+
+    </div>
+
+
+    <div class="feature-grid">
+
+        <div class="feature">
+            <div class="feature-icon">01</div>
+            <h3>Repository Health</h3>
+            <p>
+                Get a simple assessment based on observable repository
+                signals such as activity, documentation, releases and community data.
+            </p>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">02</div>
+            <h3>Technology Detection</h3>
+            <p>
+                Identify languages, frameworks, package managers and
+                common project technologies.
+            </p>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">03</div>
+            <h3>Evidence First</h3>
+            <p>
+                Every assessment is connected to observable information.
+                GitScope does not claim that a repository is guaranteed safe.
+            </p>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">04</div>
+            <h3>Activity Signals</h3>
+            <p>
+                See recent commits, releases, issues and other signals
+                that can help identify active or neglected projects.
+            </p>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">05</div>
+            <h3>Repository Comparison</h3>
+            <p>
+                Compare projects side-by-side to decide which repository
+                better fits your needs.
+            </p>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">06</div>
+            <h3>Clear Reports</h3>
+            <p>
+                Turn technical repository information into a concise
+                report that is easier to understand and share.
+            </p>
+        </div>
+
+    </div>
+
+</section>
+
+
+<section id="pro" class="pricing">
+
+    <div class="pricing-heading">
+
+        <div class="eyebrow">
+            GITSCOPE PRO
+        </div>
+
+        <h2>
+            Go deeper with GitScope.
+        </h2>
+
+        <p>
+            Start free, then unlock deeper repository analysis.
+        </p>
+
+    </div>
+
+
+    <div class="pricing-grid">
+
+        <div class="pricing-card">
+
+            <div class="plan-name">Free</div>
+
+            <h3>
+                $0
+                <span>/ month</span>
+            </h3>
+
+            <p class="plan-description">
+                Essential repository signals.
+            </p>
+
+            <ul class="plan-features">
+                <li>5 analyses per day</li>
+                <li>Repository health</li>
+                <li>Activity signals</li>
+                <li>README analysis</li>
+                <li>License detection</li>
+                <li>Community signals</li>
+            </ul>
+
+            <button
+                class="pricing-btn free-btn"
+                onclick="window.scrollTo({top:0,behavior:'smooth'});document.getElementById('repoInput').focus();"
+            >
+                Start Free
+            </button>
+
+        </div>
+
+
+        <div class="pricing-card pro-card">
+
+            <div class="popular">
+                MOST POPULAR
+            </div>
+
+            <div class="plan-name">Pro</div>
+
+            <h3>
+                $4.99
+                <span>/ month</span>
+            </h3>
+
+            <p class="plan-description">
+                Deeper analysis for serious repository research.
+            </p>
+
+            <ul class="plan-features">
+                <li>Unlimited analyses</li>
+                <li>Technology detection</li>
+                <li>Dependency analysis</li>
+                <li>Repository comparison</li>
+                <li>Detailed evidence</li>
+                <li>Monitoring</li>
+            </ul>
+
+            <button
+                class="pricing-btn pro-pricing-btn"
+                onclick="startCheckout('monthly')"
+            >
+                Get Pro
+            </button>
+
+        </div>
+
+
+        <div class="pricing-card yearly-card">
+
+            <div class="popular best-value">
+                BEST VALUE
+            </div>
+
+            <div class="plan-name">Pro Yearly</div>
+
+            <h3>
+                $39.99
+                <span>/ year</span>
+            </h3>
+
+            <p class="plan-description">
+                Everything in Pro with a lower effective monthly price.
+            </p>
+
+            <ul class="plan-features">
+                <li>Everything in Pro</li>
+                <li>Unlimited analyses</li>
+                <li>Technology detection</li>
+                <li>Dependency analysis</li>
+                <li>Detailed evidence</li>
+                <li>Monitoring</li>
+            </ul>
+
+            <button
+                class="pricing-btn yearly-pricing-btn"
+                onclick="startCheckout('yearly')"
+            >
+                Get Pro Yearly
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="payment-note">
+        Secure checkout powered by Stripe.
+    </div>
+
+</section>
+
+
+<footer>
+
+    <div>
+        © 2026 GitScope
+    </div>
+
+    <div>
+        No code execution · Evidence-based analysis
+    </div>
+
+</footer>
+
+
+<!-- CHECKOUT / LOCK MODAL -->
+
+<div id="modal" class="modal">
+
+    <div class="modal-box">
+
+        <h3 id="modalTitle">
+            GitScope Pro
+        </h3>
+
+        <p id="modalText">
+            Unlock deeper repository analysis.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                class="close-btn"
+                onclick="closeModal()"
+            >
+                Close
+            </button>
+
+            <button
+                id="modalProButton"
+                class="modal-pro-btn"
+                onclick="startCheckout('monthly')"
+            >
+                Get Pro
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* ================================
+   STRIPE
+================================ */
+
+const STRIPE_MONTHLY_URL =
+    "https://buy.stripe.com/test_bJe3cu1A50P1fbp3hGeZ200";
+
+const STRIPE_YEARLY_URL = "";
+
+
+/* ================================
+   STATE
+================================ */
+
+let currentRepository = null;
+let currentRepositoryData = null;
+
+
+/* ================================
+   ERROR HANDLING
+================================ */
+
+function showError(message) {
+
+    const box =
+        document.getElementById("errorBox");
+
+    box.textContent = message;
+    box.style.display = "block";
+}
+
+
+function hideError() {
+
+    const box =
+        document.getElementById("errorBox");
+
+    box.textContent = "";
+    box.style.display = "none";
+}
+
+
+/* ================================
+   REPOSITORY PARSER
+================================ */
+
+function parseRepository(input) {
+
+    let value = input.trim();
+
+    value = value
+        .replace(/^https?:\/\//i, "")
+        .replace(/^www\./i, "");
+
+    if (value.startsWith("github.com/")) {
+        value = value.substring("github.com/".length);
+    }
+
+    value = value.split("?")[0];
+    value = value.split("#")[0];
+    value = value.replace(/^\/+|\/+$/g, "");
+
+    const parts =
+        value.split("/").filter(Boolean);
+
+    if (parts.length < 2) {
+        return null;
+    }
+
+    return {
+        owner: parts[0],
+        repo: parts[1].replace(/\.git$/, "")
+    };
+}
+
+
+/* ================================
+   DATE HELPERS
+================================ */
+
+function daysSince(dateString) {
+
+    if (!dateString) {
+        return 9999;
+    }
+
+    const date =
+        new Date(dateString);
+
+    if (Number.isNaN(date.getTime())) {
+        return 9999;
+    }
+
+    return Math.max(
+        0,
+        Math.floor(
+            (Date.now() - date.getTime()) / 86400000
+        )
+    );
+}
+
+
+/* ================================
+   SCORE
+================================ */
+
+function calculateScore(data) {
+
+    let score = 0;
+
+    const lastPushDays =
+        daysSince(data.pushed_at);
+
+    const createdDays =
+        daysSince(data.created_at);
+
+    if (lastPushDays <= 7) {
+        score += 25;
+    } else if (lastPushDays <= 30) {
+        score += 22;
+    } else if (lastPushDays <= 90) {
+        score += 17;
+    } else if (lastPushDays <= 180) {
+        score += 11;
+    } else if (lastPushDays <= 365) {
+        score += 6;
+    }
+
+    if (data.has_readme) {
+        score += 15;
+    }
+
+    if (data.license) {
+        score += 15;
+    }
+
+    const stars =
+        data.stargazers_count || 0;
+
+    const forks =
+        data.forks_count || 0;
+
+    if (stars >= 10000) {
+        score += 12;
+    } else if (stars >= 1000) {
+        score += 10;
+    } else if (stars >= 100) {
+        score += 7;
+    } else if (stars >= 10) {
+        score += 4;
+    }
+
+    if (forks >= 1000) {
+        score += 8;
+    } else if (forks >= 100) {
+        score += 6;
+    } else if (forks >= 10) {
+        score += 3;
+    }
+
+    const issues =
+        data.open_issues_count || 0;
+
+    if (issues === 0) {
+        score += 10;
+    } else if (issues <= 10) {
+        score += 8;
+    } else if (issues <= 50) {
+        score += 6;
+    } else if (issues <= 200) {
+        score += 3;
+    }
+
+    if (data.latest_release_days !== null) {
+
+        if (data.latest_release_days <= 30) {
+            score += 15;
+        } else if (data.latest_release_days <= 90) {
+            score += 12;
+        } else if (data.latest_release_days <= 180) {
+            score += 8;
+        } else if (data.latest_release_days <= 365) {
+            score += 4;
+        }
+    }
+
+    if (
+        createdDays < 7 &&
+        stars === 0
+    ) {
+        score = Math.min(score,55);
+    }
+
+    return Math.max(
+        0,
+        Math.min(100,score)
+    );
+}
+
+
+/* ================================
+   SIGNALS
+================================ */
+
+function setSignal(
+    titleId,
+    textId,
+    status,
+    titleText,
+    description
+) {
+
+    const title =
+        document.getElementById(titleId);
+
+    const text =
+        document.getElementById(textId);
+
+    title.textContent =
+        "● " + titleText;
+
+    text.textContent =
+        description;
+
+    title.classList.remove(
+        "good",
+        "warn",
+        "bad"
+    );
+
+    if (status === "good") {
+        title.classList.add("good");
+    }
+
+    if (status === "warn") {
+        title.classList.add("warn");
+    }
+
+    if (status === "bad") {
+        title.classList.add("bad");
+    }
+}
+
+
+/* ================================
+   SCORE DISPLAY
+================================ */
+
+function updateScore(score) {
+
+    document.getElementById("scoreValue")
+        .textContent = score;
+
+    const circle =
+        document.getElementById("scoreCircle");
+
+    const label =
+        document.getElementById("scoreLabel");
+
+    let color;
+    let labelText;
+
+    if (score >= 75) {
+
+        color = "#45d39a";
+        labelText =
+            "Strong repository signals";
+
+    } else if (score >= 50) {
+
+        color = "#f2bd55";
+        labelText =
+            "Mixed repository signals";
+
+    } else {
+
+        color = "#f06b78";
+        labelText =
+            "Weak repository signals";
+    }
+
+    const degrees =
+        score * 3.6;
+
+    circle.style.background =
+        `radial-gradient(circle,var(--surface) 58%,transparent 60%),
+         conic-gradient(
+            ${color} 0deg ${degrees}deg,
+            #263243 ${degrees}deg 360deg
+         )`;
+
+    label.style.color =
+        color;
+
+    label.textContent =
+        labelText;
+}
+
+
+/* ================================
+   GITHUB API
+================================ */
+
+async function githubFetch(url) {
+
+    const response =
+        await fetch(url, {
+            headers: {
+                "Accept":
+                    "application/vnd.github+json"
+            }
+        });
+
+    if (!response.ok) {
+
+        if (response.status === 404) {
+            throw new Error(
+                "Repository or GitHub resource not found."
+            );
+        }
+
+        if (response.status === 403) {
+            throw new Error(
+                "GitHub API rate limit reached. Please try again later."
+            );
+        }
+
+        throw new Error(
+            "GitHub could not provide this information."
+        );
+    }
+
+    return response.json();
+}
+
+
+/* ================================
+   MAIN ANALYSIS
+================================ */
+
+async function analyzeRepository() {
+
+    const input =
+        document.getElementById("repoInput");
+
+    const button =
+        document.getElementById("scanButton");
+
+    const results =
+        document.getElementById("results");
+
+    hideError();
+
+    const parsed =
+        parseRepository(input.value);
+
+    if (!parsed) {
+
+        showError(
+            "Enter a valid GitHub repository, for example: github.com/facebook/react"
+        );
+
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent =
+        "Analyzing...";
+
+    results.classList.remove("show");
+
+    try {
+
+        const base =
+            `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}`;
+
+        const data =
+            await githubFetch(base);
+
+        let hasReadme = false;
+        let latestReleaseDays = null;
+        let languages = {};
+        let contents = [];
+
+        try {
+
+            await githubFetch(
+                `${base}/readme`
+            );
+
+            hasReadme = true;
+
+        } catch {
+
+            hasReadme = false;
+        }
+
+
+        try {
+
+            const release =
+                await githubFetch(
+                    `${base}/releases/latest`
+                );
+
+            latestReleaseDays =
+                daysSince(
+                    release.published_at ||
+                    release.created_at
+                );
+
+        } catch {
+
+            latestReleaseDays = null;
+        }
+
+
+        try {
+
+            languages =
+                await githubFetch(
+                    `${base}/languages`
+                );
+
+        } catch {
+
+            languages = {};
+        }
+
+
+        try {
+
+            contents =
+                await githubFetch(
+                    base
+                ).then(async () => {
+
+                    const r =
+                        await fetch(
+                            `${base}/contents`,
+                            {
+                                headers: {
+                                    "Accept":
+                                        "application/vnd.github+json"
+                                }
+                            }
+                        );
+
+                    if (!r.ok) {
+                        return [];
+                    }
+
+                    return r.json();
+                });
+
+        } catch {
+
+            contents = [];
+        }
+
+
+        data.has_readme =
+            hasReadme;
+
+        data.latest_release_days =
+            latestReleaseDays;
+
+        data.languages =
+            languages;
+
+        data.contents =
+            contents;
+
+
+        currentRepository =
+            parsed;
+
+        currentRepositoryData =
+            data;
+
+
+        document.getElementById("owner")
+            .textContent =
+            data.owner.login;
+
+        document.getElementById("repo")
+            .textContent =
+            data.name;
+
+
+        const score =
+            calculateScore(data);
+
+        updateScore(score);
+
+
+        /* ACTIVITY */
+
+        const activityDays =
+            daysSince(data.pushed_at);
+
+        if (activityDays <= 30) {
+
+            setSignal(
+                "activityTitle",
+                "activityText",
+                "good",
+                "Activity",
+                activityDays === 0
+                    ? "Updated today."
+                    : `Updated ${activityDays} days ago.`
+            );
+
+        } else if (activityDays <= 180) {
+
+            setSignal(
+                "activityTitle",
+                "activityText",
+                "warn",
+                "Activity",
+                `Last update was ${activityDays} days ago.`
+            );
+
+        } else {
+
+            setSignal(
+                "activityTitle",
+                "activityText",
+                "bad",
+                "Activity",
+                `No push activity detected for ${activityDays} days.`
+            );
+        }
+
+
+        /* README */
+
+        setSignal(
+            "docsTitle",
+            "docsText",
+            hasReadme ? "good" : "bad",
+            "Documentation",
+            hasReadme
+                ? "A README file was detected."
+                : "No README file was detected."
+        );
+
+
+        /* LICENSE */
+
+        setSignal(
+            "licenseTitle",
+            "licenseText",
+            data.license
+                ? "good"
+                : "warn",
+            "License",
+            data.license
+                ? (
+                    data.license.spdx_id &&
+                    data.license.spdx_id !== "NOASSERTION"
+                        ? `${data.license.spdx_id} license detected.`
+                        : "A repository license was detected."
+                )
+                : "No license was detected."
+        );
+
+
+        /* COMMUNITY */
+
+        const stars =
+            data.stargazers_count || 0;
+
+        const forks =
+            data.forks_count || 0;
+
+        if (
+            stars >= 1000 ||
+            forks >= 100
+        ) {
+
+            setSignal(
+                "communityTitle",
+                "communityText",
+                "good",
+                "Community",
+                `${stars.toLocaleString()} stars and ${forks.toLocaleString()} forks.`
+            );
+
+        } else if (
+            stars >= 10 ||
+            forks >= 1
+        ) {
+
+            setSignal(
+                "communityTitle",
+                "communityText",
+                "warn",
+                "Community",
+                `${stars.toLocaleString()} stars and ${forks.toLocaleString()} forks.`
+            );
+
+        } else {
+
+            setSignal(
+                "communityTitle",
+                "communityText",
+                "warn",
+                "Community",
+                "Limited public community activity detected."
+            );
+        }
+
+
+        /* ISSUES */
+
+        const issues =
+            data.open_issues_count || 0;
+
+        if (issues === 0) {
+
+            setSignal(
+                "issuesTitle",
+                "issuesText",
+                "good",
+                "Open issues",
+                "No open issues are currently reported."
+            );
+
+        } else if (issues <= 50) {
+
+            setSignal(
+                "issuesTitle",
+                "issuesText",
+                "warn",
+                "Open issues",
+                `${issues.toLocaleString()} open issues.`
+            );
+
+        } else {
+
+            setSignal(
+                "issuesTitle",
+                "issuesText",
+                "bad",
+                "Open issues",
+                `${issues.toLocaleString()} open issues are currently reported.`
+            );
+        }
+
+
+        /* RELEASES */
+
+        if (latestReleaseDays === null) {
+
+            setSignal(
+                "releaseTitle",
+                "releaseText",
+                "warn",
+                "Releases",
+                "No public latest release was detected."
+            );
+
+        } else if (latestReleaseDays <= 90) {
+
+            setSignal(
+                "releaseTitle",
+                "releaseText",
+                "good",
+                "Releases",
+                `Latest release was ${
+                    latestReleaseDays === 0
+                        ? "today"
+                        : latestReleaseDays + " days ago"
+                }.`
+            );
+
+        } else {
+
+            setSignal(
+                "releaseTitle",
+                "releaseText",
+                "warn",
+                "Releases",
+                `Latest release was ${latestReleaseDays} days ago.`
+            );
+        }
+
+
+        populateProData(data);
+
+
+        results.classList.add("show");
+
+        setTimeout(() => {
+
+            results.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        },100);
+
+    } catch(error) {
+
+        showError(
+            error.message ||
+            "Something went wrong while analyzing the repository."
+        );
+
+    } finally {
+
+        button.disabled = false;
+        button.textContent =
+            "Analyze";
+    }
+}
+
+
+/* ================================
+   PRO DATA
+================================ */
+
+function populateProData(data) {
+
+    /* TECHNOLOGIES */
+
+    const tags =
+        document.getElementById(
+            "technologyTags"
+        );
+
+    tags.innerHTML = "";
+
+    const languages =
+        Object.keys(
+            data.languages || {}
+        );
+
+    if (languages.length === 0) {
+
+        const tag =
+            document.createElement("span");
+
+        tag.className =
+            "tech-tag";
+
+        tag.textContent =
+            "Language data unavailable";
+
+        tags.appendChild(tag);
+
+    } else {
+
+        languages
+            .slice(0,8)
+            .forEach(language => {
+
+                const tag =
+                    document.createElement("span");
+
+                tag.className =
+                    "tech-tag";
+
+                tag.textContent =
+                    language;
+
+                tags.appendChild(tag);
+            });
+    }
+
+
+    /* DEPENDENCY FILES */
+
+    const files =
+        (data.contents || [])
+            .filter(item =>
+                item.type === "file"
+            )
+            .map(item =>
+                item.name.toLowerCase()
+            );
+
+    const dependencyNames = [
+        "package.json",
+        "package-lock.json",
+        "yarn.lock",
+        "pnpm-lock.yaml",
+        "requirements.txt",
+        "pyproject.toml",
+        "cargo.toml",
+        "go.mod",
+        "composer.json",
+        "gemfile"
+    ];
+
+    const found =
+        dependencyNames.filter(
+            name => files.includes(name)
+        );
+
+    document.getElementById(
+        "dependencyFiles"
+    ).textContent =
+        found.length
+            ? found.join(", ")
+            : "None detected at root";
+
+
+    /* SIZE */
+
+    document.getElementById(
+        "repoSize"
+    ).textContent =
+        `${data.size.toLocaleString()} KB`;
+
+
+    /* FORK */
+
+    document.getElementById(
+        "repoFork"
+    ).textContent =
+        data.fork
+            ? "Yes"
+            : "No";
+
+
+    /* SECURITY */
+
+    const security =
+        document.getElementById(
+            "securityEvidence"
+        );
+
+    security.innerHTML = "";
+
+
+    const securityItems = [];
+
+
+    if (data.license) {
+
+        securityItems.push(
+            "A repository license is declared."
+        );
+
+    } else {
+
+        securityItems.push(
+            "No repository license was detected."
+        );
+    }
+
+
+    if (data.has_readme) {
+
+        securityItems.push(
+            "A README provides project documentation."
+        );
+
+    } else {
+
+        securityItems.push(
+            "No README file was detected."
+        );
+    }
+
+
+    if (found.length) {
+
+        securityItems.push(
+            "A dependency/package file was detected."
+        );
+
+    } else {
+
+        securityItems.push(
+            "No common dependency manifest was detected at the root."
+        );
+    }
+
+
+    securityItems.push(
+        data.archived
+            ? "Repository is archived."
+            : "Repository is not marked as archived."
+    );
+
+
+    securityItems.forEach(item => {
+
+        const li =
+            document.createElement("li");
+
+        li.textContent =
+            item;
+
+        security.appendChild(li);
+    });
+
+
+    /* DETAILED EVIDENCE */
+
+    const evidence =
+        document.getElementById(
+            "detailedEvidence"
+        );
+
+    evidence.innerHTML = "";
+
+
+    const evidenceItems = [
+
+        `Repository created ${formatAge(data.created_at)}.`,
+
+        `Last push activity: ${formatDate(data.pushed_at)}.`,
+
+        `${(data.stargazers_count || 0).toLocaleString()} public stars.`,
+
+        `${(data.forks_count || 0).toLocaleString()} public forks.`,
+
+        `${(data.open_issues_count || 0).toLocaleString()} open issues.`,
+
+        data.license
+            ? `License detected: ${
+                data.license.spdx_id || "declared license"
+              }.`
+            : "No license was detected.",
+
+        data.default_branch
+            ? `Default branch: ${data.default_branch}.`
+            : "Default branch information unavailable."
+
+    ];
+
+
+    evidenceItems.forEach(item => {
+
+        const li =
+            document.createElement("li");
+
+        li.textContent =
+            item;
+
+        evidence.appendChild(li);
+    });
+}
+
+
+function formatDate(dateString) {
+
+    if (!dateString) {
+        return "Unknown";
+    }
+
+    return new Date(
+        dateString
+    ).toLocaleDateString(
+        undefined,
+        {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+        }
+    );
+}
+
+
+function formatAge(dateString) {
+
+    const days =
+        daysSince(dateString);
+
+    if (days === 0) {
+        return "today";
+    }
+
+    if (days < 30) {
+        return `${days} days ago`;
+    }
+
+    if (days < 365) {
+        return `${Math.floor(days / 30)} months ago`;
+    }
+
+    return `${Math.floor(days / 365)} years ago`;
+}
+
+
+/* ================================
+   DEMO PRO
+================================ */
+
+function toggleDemoPro() {
+
+    const enabled =
+        document.getElementById(
+            "demoProToggle"
+        ).checked;
+
+    const locked =
+        document.getElementById(
+            "proLocked"
+        );
+
+    const unlocked =
+        document.getElementById(
+            "proUnlocked"
+        );
+
+
+    if (enabled) {
+
+        locked.classList.add("hidden");
+        unlocked.classList.add("active");
+
+    } else {
+
+        locked.classList.remove("hidden");
+        unlocked.classList.remove("active");
+    }
+}
+
+
+/* ================================
+   COMPARISON
+================================ */
+
+async function compareRepository() {
+
+    const input =
+        document.getElementById(
+            "compareInput"
+        );
+
+    const result =
+        document.getElementById(
+            "comparisonResult"
+        );
+
+    const parsed =
+        parseRepository(input.value);
+
+    if (!parsed) {
+
+        result.textContent =
+            "Enter a valid GitHub repository.";
+
+        return;
+    }
+
+    if (!currentRepositoryData) {
+
+        result.textContent =
+            "Analyze a repository first.";
+
+        return;
+    }
+
+
+    result.textContent =
+        "Comparing...";
+
+
+    try {
+
+        const url =
+            `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}`;
+
+        const other =
+            await githubFetch(url);
+
+
+        let otherReadme =
+            false;
+
+        try {
+
+            await githubFetch(
+                `${url}/readme`
+            );
+
+            otherReadme = true;
+
+        } catch {}
+
+
+        other.has_readme =
+            otherReadme;
+
+        other.latest_release_days =
+            null;
+
+
+        const currentScore =
+            calculateScore(
+                currentRepositoryData
+            );
+
+        const otherScore =
+            calculateScore(
+                other
+            );
+
+
+        if (otherScore > currentScore) {
+
+            result.innerHTML =
+                `<strong>${escapeHtml(parsed.owner)}/${escapeHtml(parsed.repo)}</strong>
+                 currently scores higher:
+                 <strong>${otherScore}/100</strong>
+                 vs
+                 <strong>${currentScore}/100</strong>.`;
+
+        } else if (otherScore < currentScore) {
+
+            result.innerHTML =
+                `<strong>${escapeHtml(currentRepository.owner)}/${escapeHtml(currentRepository.repo)}</strong>
+                 currently scores higher:
+                 <strong>${currentScore}/100</strong>
+                 vs
+                 <strong>${otherScore}/100</strong>.`;
+
+        } else {
+
+            result.innerHTML =
+                `Both repositories currently score
+                 <strong>${currentScore}/100</strong>.`;
+        }
+
+    } catch(error) {
+
+        result.textContent =
+            error.message ||
+            "Comparison failed.";
+    }
+}
+
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+}
+
+
+/* ================================
+   MONITORING
+================================ */
+
+function enableMonitoring() {
+
+    const status =
+        document.getElementById(
+            "monitorStatus"
+        );
+
+    if (!currentRepository) {
+
+        status.textContent =
+            "Analyze a repository first.";
+
+        return;
+    }
+
+
+    status.textContent =
+        `${currentRepository.owner}/${currentRepository.repo} selected for monitoring preview.`;
+}
+
+
+/* ================================
+   STRIPE CHECKOUT
+================================ */
+
+function startCheckout(plan) {
+
+    const url =
+        plan === "monthly"
+            ? STRIPE_MONTHLY_URL
+            : STRIPE_YEARLY_URL;
+
+
+    if (!url) {
+
+        openModal(
+            "Yearly checkout isn't connected",
+            "Create your yearly Stripe Payment Link and put it in STRIPE_YEARLY_URL."
+        );
+
+        return;
+    }
+
+
+    window.location.href =
+        url;
+}
+
+
+/* ================================
+   MODAL
+================================ */
+
+function openModal(title,text) {
+
+    document.getElementById(
+        "modalTitle"
+    ).textContent = title;
+
+    document.getElementById(
+        "modalText"
+    ).textContent = text;
+
+    document.getElementById(
+        "modal"
+    ).classList.add("show");
+}
+
+
+function closeModal() {
+
+    document.getElementById(
+        "modal"
+    ).classList.remove("show");
+}
+
+
+/* ================================
+   ENTER KEY
+================================ */
+
+document
+    .getElementById("repoInput")
+    .addEventListener(
+        "keydown",
+        event => {
+
+            if (event.key === "Enter") {
+                analyzeRepository();
+            }
+
+        }
+    );
+
+
+/* CLOSE MODAL */
+
+document
+    .getElementById("modal")
+    .addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                document.getElementById("modal")
+            ) {
+                closeModal();
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+</html>
+
